@@ -11,12 +11,12 @@
 | Feature                                                   | Supported |
 | --------------------------------------------------------- | :-------: |
 | Multithreading                                            |    ✅     |
-| Auto-Mine                                                 |    ✅     |
-| Auto-Claim farm                                           |    ✅     |
-| UPGRADE SPEED                                             |    ✅     |
-| UPGRADE STORAGE                                           |    ✅     |
+| Auto catch worm                                           |    🔥     |
+| Auto claim                                                |    ✅     |
+| Upgrade speed                                             |    ✅     |
+| Upgrade storage                                           |    ✅     |
 | Auto-start, auto-check and auto-claim tasks               |    ✅     |
-| Support for tdata / pyrogram .session / telethon .session |    ✅     |
+| Support for tdata/pyrogram.session/telethon.session       |    ✅     |
 
 ## Prerequisites
 
