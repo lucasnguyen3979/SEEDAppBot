@@ -100,7 +100,8 @@ class Miner:
             raise error
 
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error during Authorization: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error during Authorization: {error}")
             await asyncio.sleep(delay=7)
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy) -> None:
@@ -109,7 +110,8 @@ class Miner:
             ip = (await response.json()).get('origin')
             logger.info(f"{self.session_name} | Proxy IP: {ip}")
         except Exception as error:
-            logger.error(f"{self.session_name} | Proxy: {proxy} | Error: {error}")
+            logger.error(
+                f"{self.session_name} | Proxy: {proxy} | Error: {error}")
 
     async def balance(self, http_client: aiohttp.ClientSession) -> float:
         try:
@@ -122,7 +124,8 @@ class Miner:
             balance = float(response_json['data']) / 1000000000
             return balance
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily claiming: {error}")
             await asyncio.sleep(delay=7)
 
     async def profile(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
@@ -136,7 +139,8 @@ class Miner:
             profile = response_json
             return profile
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while fetching profile: {error}")
             await asyncio.sleep(delay=7)
 
     async def claim(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
@@ -150,7 +154,8 @@ class Miner:
             claim = response_json
             return claim
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily claiming: {error}")
             await asyncio.sleep(delay=7)
 
     async def get_daily_bonuses(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
@@ -165,7 +170,8 @@ class Miner:
 
             return daily_info
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily bonus claiming: {error}")
             await asyncio.sleep(delay=7)
 
     async def daily_claim(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
@@ -180,8 +186,43 @@ class Miner:
 
             return daily_info
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily claiming: {error}")
             await asyncio.sleep(delay=7)
+
+    async def get_worm_info(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
+        try:
+            response = await http_client.get(url='https://elb.seeddao.org/api/v1/worms', timeout=aiohttp.ClientTimeout(5))
+
+            response.raise_for_status()
+
+            response_json = await response.json()
+            worm_info = response_json
+
+            return worm_info
+        except Exception as error:
+            logger.error(
+                f"{self.session_name} | Unknown error while getting worm info: {error}")
+            await asyncio.sleep(delay=7)
+
+    async def worm_claim(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
+        print('worm_claim is waiting for implementation')
+
+    def is_worm_claim_possible(self, worm_info: Dict[str, Any]) -> bool:
+        if not worm_info:
+            return True
+
+        data = worm_info.get('data')
+        if not data:
+            return True
+
+        if isinstance(data, dict):
+            is_caught = data['is_caught']
+            if is_caught:
+                return False
+            return True
+
+        return False
 
     def is_daily_claim_possible(self, daily_info: Dict[str, Any]) -> bool:
         if not daily_info:
@@ -203,7 +244,8 @@ class Miner:
         last_timestamp = 0
         if isinstance(data, list):
             for claim in data:
-                timestamp = dateutil.parser.parse(claim['timestamp']).timestamp()
+                timestamp = dateutil.parser.parse(
+                    claim['timestamp']).timestamp()
                 if timestamp >= last_timestamp:
                     last_timestamp = timestamp
 
@@ -216,8 +258,10 @@ class Miner:
         if not profile:
             return False
 
-        last_claim_timestamp = dateutil.parser.parse(profile['data']['last_claim']).timestamp()
-        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(profile)
+        last_claim_timestamp = dateutil.parser.parse(
+            profile['data']['last_claim']).timestamp()
+        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(
+            profile)
 
         if storage_level <= 0:
             storage_hours = 2
@@ -229,20 +273,32 @@ class Miner:
         if time.time() > next_claim_timestamp:
             return True
 
-        percent = 100 * (time.time() - last_claim_timestamp) / (storage_hours * 3600)
+        percent = 100 * (time.time() - last_claim_timestamp) / \
+            (storage_hours * 3600)
         if percent >= settings.CLAIM_MIN_PERCENT:
             return True
 
         return False
 
+    def get_sleep_time_to_claim_worm(self, worm_info: Dict[str, Any]) -> int:
+        next_worm_timestamp = dateutil.parser.parse(
+            worm_info['data']['next_worm']).timestamp()
+
+        return next_worm_timestamp - time.time()
+
     def get_sleep_time_to_claim(self, profile: Dict[str, Any]) -> int:
-        last_claim_timestamp = dateutil.parser.parse(profile['data']['last_claim']).timestamp()
-        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(profile)
+        last_claim_timestamp = dateutil.parser.parse(
+            profile['data']['last_claim']).timestamp()
+        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(
+            profile)
 
         if storage_level <= 0:
             storage_hours = 2
         else:
             storage_hours = self.storage_levels[str(storage_level)]
+
+        if storage_level >= 4:
+            storage_hours = self.storage_levels[str('2')]
 
         next_claim_timestamp = last_claim_timestamp + storage_hours * 3600
         return next_claim_timestamp - time.time()
@@ -287,11 +343,13 @@ class Miner:
 
             return daily_info
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily claiming: {error}")
             await asyncio.sleep(delay=7)
 
     async def upgrade_speed_if_possible(self, http_client: aiohttp.ClientSession, profile: Dict[str, Any], balance: float) -> bool:
-        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(profile)
+        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(
+            profile)
         next_speed_level = speed_level + 1
 
         if settings.SPEED_MAX_LEVEL >= next_speed_level:
@@ -299,12 +357,14 @@ class Miner:
             if skey in self.speed_upgrades:
                 price = self.speed_upgrades[skey]
                 if balance >= price:
-                    logger.info(f"f{self.session_name} | Speed upgrade is possible, trying to upgrade")
+                    logger.info(
+                        f"f{self.session_name} | Speed upgrade is possible, trying to upgrade")
                     upgrade_speed_res = await self.upgrade_speed(http_client=http_client)
                     if not upgrade_speed_res:
                         return True
                     else:
-                        logger.error(f"f{self.session_name} | Speed upgraded unsuccessfully with error messge <c>{upgrade_speed_res['message']}</c>")
+                        logger.error(
+                            f"f{self.session_name} | Speed upgraded unsuccessfully with error messge <c>{upgrade_speed_res['message']}</c>")
                         return False
         return False
 
@@ -320,11 +380,13 @@ class Miner:
 
             return daily_info
         except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error while daily claiming: {error}")
+            logger.error(
+                f"{self.session_name} | Unknown error while daily claiming: {error}")
             await asyncio.sleep(delay=7)
 
     async def upgrade_storage_if_possible(self, http_client: aiohttp.ClientSession, profile: Dict[str, Any], balance: float) -> bool:
-        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(profile)
+        speed_level, storage_level, holy_level = self.get_storage_and_speed_levels(
+            profile)
         next_storage_level = storage_level + 1
 
         if settings.STORAGE_MAX_LEVEL >= next_storage_level:
@@ -332,12 +394,14 @@ class Miner:
             if skey in self.storage_ugprades:
                 price = self.storage_ugprades[skey]
                 if balance >= price:
-                    logger.info(f"f{self.session_name} | Storage upgrade is possible, trying to upgrade")
+                    logger.info(
+                        f"f{self.session_name} | Storage upgrade is possible, trying to upgrade")
                     upgrade_storage_res = await self.upgrade_storage(http_client=http_client)
                     if not upgrade_storage_res:
                         return True
                     else:
-                        logger.error(f"f{self.session_name} | Storage upgraded unsuccessfully with error messge <c>{upgrade_storage_res['message']}</c>")
+                        logger.error(
+                            f"f{self.session_name} | Storage upgraded unsuccessfully with error messge <c>{upgrade_storage_res['message']}</c>")
                         return False
         return False
 
@@ -364,54 +428,80 @@ class Miner:
 
                     profile = await self.profile(http_client=http_client)
                     balance = await self.balance(http_client=http_client)
-                    logger.info(f"{self.session_name} | Balance is <c>{balance: .6f}</c>")
+                    logger.info(
+                        f"{self.session_name} | Balance is <c>{balance: .6f}</c>")
 
                     claim_possible = self.is_claim_possible(profile=profile)
                     if claim_possible:
                         claim_status = await self.claim(http_client=http_client)
                         if claim_status:
                             balance = await self.balance(http_client=http_client)
-                            logger.success(f"{self.session_name} | Claimed successfully, new balance is <c>{balance}</c>")
+                            logger.success(
+                                f"{self.session_name} | Claimed successfully, new balance is <c>{balance}</c>")
                             profile = await self.profile(http_client=http_client)
 
                     daily_info = await self.get_daily_bonuses(http_client=http_client)
                     daily_possible = self.is_daily_claim_possible(daily_info)
                     if daily_possible:
-                        logger.info(f"{self.session_name} | Daily claim is possible, claiming")
+                        logger.info(
+                            f"{self.session_name} | Daily claim is possible, claiming...")
                         res = await self.daily_claim(http_client=http_client)
                         if res:
                             balance = await self.balance(http_client=http_client)
-                            logger.success(f"{self.session_name} | Daily claim was possible, new balance is <c>{balance}</c>")
+                            logger.success(
+                                f"{self.session_name} | Daily claim was possible, new balance is <c>{balance}</c>")
+
+                    worm_sleep_time = time.time()
+                    if settings.CATCH_WORM == True:
+                        worm_info = await self.get_worm_info(http_client=http_client)
+                        worm_possible = self.is_worm_claim_possible(worm_info)
+                        if worm_possible:
+                            logger.info(
+                                f"{self.session_name} | Worm claim is possible, claiming...")
+                            res = await self.worm_claim(http_client=http_client)
+                            if res:
+                                logger.success(
+                                    f"{self.session_name} | Worm claim was succeeded!")
+                        worm_sleep_time = self.get_sleep_time_to_claim_worm(
+                            worm_info)
 
                     upgrade_speed_res = await self.upgrade_speed_if_possible(http_client=http_client, profile=profile, balance=balance)
                     if upgrade_speed_res:
                         profile = await self.profile(http_client=http_client)
                         balance = await self.balance(http_client=http_client)
-                        logger.success(f"{self.session_name} | Speed upgraded successfully, new balance is <c>{balance}</c>")
+                        logger.success(
+                            f"{self.session_name} | Speed upgraded successfully, new balance is <c>{balance}</c>")
 
                     upgrade_storage_res = await self.upgrade_storage_if_possible(http_client=http_client, profile=profile, balance=balance)
                     if upgrade_storage_res:
                         profile = await self.profile(http_client=http_client)
                         balance = await self.balance(http_client=http_client)
-                        logger.success(f"{self.session_name} | Storage upgraded successfully, new balance is <c>{balance}</c>")
+                        logger.success(
+                            f"{self.session_name} | Storage upgraded successfully, new balance is <c>{balance}</c>")
 
                     sleep_time = self.get_sleep_time_to_claim(profile)
+
                     if sleep_time <= 0:
                         sleep_time = settings.DEFAULT_SLEEP
+
+                    if worm_sleep_time <= sleep_time:
+                        sleep_time = worm_sleep_time
 
                 except InvalidSession as error:
                     raise error
 
                 except Exception as error:
-                    logger.error(f"{self.session_name} | Unknown error: {error}")
+                    logger.error(
+                        f"{self.session_name} | Unknown error: {error}")
                     await asyncio.sleep(delay=7)
 
                 else:
-                    logger.info(f"{self.session_name} | Sleeping for the next claim {sleep_time}s")
+                    logger.info(
+                        f"{self.session_name} | Sleeping for the next claim {sleep_time}s")
                     await asyncio.sleep(delay=sleep_time)
 
 
-async def run_miner(tg_client: Client, proxy: str | None):
+async def run_tapper(tg_client: Client, proxy: str | None):
     try:
         await Miner(tg_client=tg_client).run(proxy=proxy)
     except InvalidSession:

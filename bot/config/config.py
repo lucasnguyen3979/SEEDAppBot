@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     API_ID: int
     API_HASH: str
 
+    CATCH_WORM: bool = True
+
     CLAIM_MIN_PERCENT: int = 75
     CLAIM_RETRY_COUNT: int = 3
 

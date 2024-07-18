@@ -9,32 +9,25 @@ from better_proxy import Proxy
 
 from bot.config import settings
 from bot.utils import logger
-from bot.core.miner import run_miner
+from bot.core.tapper import run_tapper
 from bot.core.registrator import register_sessions
 
 
 start_text = """
 
-███████╗██╗███████╗     ██████╗ ██████╗ ██████╗ ███████╗██████╗ 
-██╔════╝██║╚══███╔╝    ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗
-███████╗██║  ███╔╝     ██║     ██║   ██║██║  ██║█████╗  ██████╔╝
-╚════██║██║ ███╔╝      ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗
-███████║██║███████╗    ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║
-╚══════╝╚═╝╚══════╝     ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-
-SEED AUTO BOT
-Prepared and Developed by: F.Davoodi                                                     
+Prepared and Developed by: Lucas Nguyen                                                     
                                                           
 Select an action:
 
     1. Create session
-    2. Run miner
+    2. Run bot
 """
 
 
 def get_session_names() -> list[str]:
     session_names = glob.glob('sessions/*.session')
-    session_names = [os.path.splitext(os.path.basename(file))[0] for file in session_names]
+    session_names = [os.path.splitext(os.path.basename(file))[
+        0] for file in session_names]
 
     return session_names
 
@@ -42,7 +35,8 @@ def get_session_names() -> list[str]:
 def get_proxies() -> list[Proxy]:
     if settings.USE_PROXY_FROM_FILE:
         with open(file='bot/config/proxies.txt', encoding='utf-8-sig') as file:
-            proxies = [Proxy.from_str(proxy=row.strip()).as_url for row in file]
+            proxies = [Proxy.from_str(
+                proxy=row.strip()).as_url for row in file]
     else:
         proxies = []
 
@@ -75,7 +69,8 @@ async def process() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--action', type=int, help='Action to perform')
 
-    logger.info(f"Detected {len(get_session_names())} sessions | {len(get_proxies())} proxies")
+    logger.info(
+        f"Detected {len(get_session_names())} sessions | {len(get_proxies())} proxies")
 
     action = parser.parse_args().action
 
@@ -104,6 +99,7 @@ async def process() -> None:
 async def run_tasks(tg_clients: list[Client]):
     proxies = get_proxies()
     proxies_cycle = cycle(proxies) if proxies else None
-    tasks = [asyncio.create_task(run_miner(tg_client=tg_client, proxy=next(proxies_cycle) if proxies_cycle else None)) for tg_client in tg_clients]
+    tasks = [asyncio.create_task(run_tapper(tg_client=tg_client, proxy=next(
+        proxies_cycle) if proxies_cycle else None)) for tg_client in tg_clients]
 
     await asyncio.gather(*tasks)
