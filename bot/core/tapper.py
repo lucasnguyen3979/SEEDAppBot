@@ -369,13 +369,13 @@ class Miner:
                 price = self.speed_upgrades[skey]
                 if balance >= price:
                     logger.info(
-                        f"f{self.session_name} | Speed upgrade is possible, trying to upgrade")
+                        f"{self.session_name} | Speed upgrade is possible, trying to upgrade")
                     upgrade_speed_res = await self.upgrade_speed(http_client=http_client)
                     if not upgrade_speed_res:
                         return True
                     else:
                         logger.error(
-                            f"f{self.session_name} | Speed upgraded unsuccessfully with error messge <c>{upgrade_speed_res['message']}</c>")
+                            f"f{self.session_name} | Speed upgraded unsuccessfully with error message <c>{upgrade_speed_res['message']}</c>")
                         return False
         return False
 
@@ -475,7 +475,7 @@ class Miner:
                                 worm_info = await self.get_worm_info(http_client=http_client)
                                 if catch_res['status'] == 'successful':
                                     logger.success(
-                                        f"{self.session_name} | Catch worm {catch_res['type'].upper()} was succeeded!")
+                                        f"{self.session_name} | Catch worm <c>{catch_res['type'].upper()}</c> was succeeded!")
                                 else:
                                     logger.info(
                                         f"{self.session_name} | Catch worm was failed!")
