@@ -192,8 +192,7 @@ class Miner:
 
     async def get_worm_info(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
         try:
-            response = await http_client.get(url='https://elb.seeddao.org/api/v1/worms', timeout=aiohttp.ClientTimeout(5))
-
+            response = await http_client.get(url='https://elb.seeddao.org/api/v1/worms', json={})
             response.raise_for_status()
 
             response_json = await response.json()
@@ -205,8 +204,20 @@ class Miner:
                 f"{self.session_name} | Unknown error while getting worm info: {error}")
             await asyncio.sleep(delay=7)
 
-    async def worm_claim(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
-        print('worm_claim is waiting for implementation')
+    async def catch_worm(self, http_client: aiohttp.ClientSession) -> Dict[str, Any]:
+        try:
+            response = await http_client.post(url='https://elb.seeddao.org/api/v1/worms/catch', json={})
+
+            response.raise_for_status()
+
+            response_json = await response.json()
+            catch_info = response_json
+
+            return catch_info
+        except Exception as error:
+            logger.error(
+                f"{self.session_name} | Unknown error while catching worm info: {error}")
+            await asyncio.sleep(delay=7)
 
     def is_worm_claim_possible(self, worm_info: Dict[str, Any]) -> bool:
         if not worm_info:
@@ -457,11 +468,17 @@ class Miner:
                         worm_possible = self.is_worm_claim_possible(worm_info)
                         if worm_possible:
                             logger.info(
-                                f"{self.session_name} | Worm claim is possible, claiming...")
-                            res = await self.worm_claim(http_client=http_client)
+                                f"{self.session_name} | Worm {worm_info['type'].upper()} is appeared, catching...")
+                            res = await self.catch_worm(http_client=http_client)
                             if res:
-                                logger.success(
-                                    f"{self.session_name} | Worm claim was succeeded!")
+                                catch_res = res['data']
+                                worm_info = await self.get_worm_info(http_client=http_client)
+                                if catch_res['status'] == 'successful':
+                                    logger.success(
+                                        f"{self.session_name} | Catch worm {catch_res['type'].upper()} was succeeded!")
+                                else:
+                                    logger.info(
+                                        f"{self.session_name} | Catch worm was failed!")
                         worm_sleep_time = self.get_sleep_time_to_claim_worm(
                             worm_info)
 
