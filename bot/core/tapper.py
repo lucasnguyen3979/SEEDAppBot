@@ -468,7 +468,7 @@ class Miner:
                         worm_possible = self.is_worm_claim_possible(worm_info)
                         if worm_possible:
                             logger.info(
-                                f"{self.session_name} | Worm {worm_info['type'].upper()} is appeared, catching...")
+                                f"{self.session_name} | Worm is appeared, catching...")
                             res = await self.catch_worm(http_client=http_client)
                             if res:
                                 catch_res = res['data']
