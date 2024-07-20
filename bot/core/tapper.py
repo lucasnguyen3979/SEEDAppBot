@@ -327,7 +327,6 @@ class Miner:
         holy_level = 0
         for upgrade in upgrades:
             type = upgrade['upgrade_type']
-            print(upgrade)
             if type == 'mining-speed':
                 level = upgrade['upgrade_level']
                 if level >= speed_level:
