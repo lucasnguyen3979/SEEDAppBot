@@ -13,10 +13,10 @@ class Settings(BaseSettings):
     CLAIM_RETRY_COUNT: int = 3
 
     UPGRADE_SPEED: bool = True
-    SPEED_MAX_LEVEL: int = 7
+    SPEED_MAX_LEVEL: int = 5
 
     UPGRADE_STORAGE: bool = True
-    STORAGE_MAX_LEVEL: int = 7
+    STORAGE_MAX_LEVEL: int = 5
 
     DEFAULT_SLEEP: int = 3600
 

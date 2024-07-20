@@ -229,7 +229,7 @@ class Miner:
 
         if isinstance(data, dict):
             is_caught = data['is_caught']
-            if is_caught:
+            if is_caught == True:
                 return False
             return True
 
@@ -327,6 +327,7 @@ class Miner:
         holy_level = 0
         for upgrade in upgrades:
             type = upgrade['upgrade_type']
+            print(upgrade)
             if type == 'mining-speed':
                 level = upgrade['upgrade_level']
                 if level >= speed_level:
@@ -412,7 +413,7 @@ class Miner:
                         return True
                     else:
                         logger.error(
-                            f"f{self.session_name} | Storage upgraded unsuccessfully with error messge <c>{upgrade_storage_res['message']}</c>")
+                            f"f{self.session_name} | Storage upgraded unsuccessfully with error message <c>{upgrade_storage_res['message']}</c>")
                         return False
         return False
 
@@ -466,7 +467,7 @@ class Miner:
                     if settings.CATCH_WORM == True:
                         worm_info = await self.get_worm_info(http_client=http_client)
                         worm_possible = self.is_worm_claim_possible(worm_info)
-                        if worm_possible:
+                        if worm_possible == True:
                             logger.info(
                                 f"{self.session_name} | Worm is appeared, catching...")
                             res = await self.catch_worm(http_client=http_client)
